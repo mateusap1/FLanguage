@@ -7,6 +7,7 @@ import matchers._
 import Interpreter._
 import Declarations._
 import StateMonad._
+import cats.data.State
 
 class InterpreterTest extends AnyFlatSpec with should.Matchers {
 
@@ -14,11 +15,11 @@ class InterpreterTest extends AnyFlatSpec with should.Matchers {
 
   val declarations = List(inc)
 
-  val initialState: S = List()
+  val initialState: StateData = List()
 
   "eval CInt(5)" should "return an integer value 5." in {
     val c5 = CInt(5)
-    val (res, _) = runState(eval(c5, declarations))(initialState)
+    val res = eval(c5, declarations).runA(initialState).value
     res should be (5)
   }
 
@@ -26,7 +27,7 @@ class InterpreterTest extends AnyFlatSpec with should.Matchers {
     val c5  = CInt(5)
     val c10 = CInt(10)
     val add = Add(c5, c10)
-    val (res, _) = runState(eval(add, declarations))(initialState)
+    val res = eval(add, declarations).runA(initialState).value
     res should be (15)
   }
 
@@ -34,7 +35,7 @@ class InterpreterTest extends AnyFlatSpec with should.Matchers {
     val c5 = CInt(5)
     val c10 = CInt(10)
     val add = Add(c5, Add(c5, c10))
-    val (res, _) = runState(eval(add, declarations))(initialState)
+    val res = eval(add, declarations).runA(initialState).value
     res should be(20)
   }
 
@@ -42,13 +43,13 @@ class InterpreterTest extends AnyFlatSpec with should.Matchers {
     val c5 = CInt(5)
     val c10 = CInt(10)
     val mul = Mul(c5, CInt(10))
-    val (res, _) = runState(eval(mul, declarations))(initialState)
+    val res = eval(mul, declarations).runA(initialState).value
     res should be(50)
   }
 
   "eval App(inc, 99) " should "return an integer value 100" in {
     val app = App("inc", CInt(99))
-    val (res, _) = runState(eval(app, declarations))(initialState)
+    val res = eval(app, declarations).runA(initialState).value
     res should be (100)
   }
 }
