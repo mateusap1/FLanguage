@@ -1,10 +1,32 @@
 package br.unb.cic.flang
 
-import cats.Monad
-
 package object Syntax {
-  case class Parser[A](parse: (String => Option[(A, String)]))
-  val ParserMonad = new Monad[Parser] {
+  case class Parser[A](parse: (String => Option[(A, String)])) {
+    def map[B](f: A => B): Parser[B] = {
+      return Parser[B](
+        (
+            cs =>
+              parse(cs) match {
+                case None          => None
+                case Some((c, cs)) => Some((f(c), cs))
+              }
+        )
+      )
+    }
+    def flatMap[B](f: A => Parser[B]): Parser[B] = {
+      return Parser[B](
+        (
+            cs =>
+              parse(cs) match {
+                case None           => None
+                case Some((x, cs2)) => f(x).parse(cs2)
+              }
+        )
+      )
+    }
+  }
+
+  object Parser {
     def pure[A](x: A): Parser[A] = {
       return Parser[A]((cs => Some((x, cs))))
     }
@@ -19,25 +41,7 @@ package object Syntax {
         )
       )
     }
-    def tailRecM[A, B](a: A)(f: A => Parser[Either[A, B]]): Parser[B] = ???
   }
-  // object Parser extends Monad[Parser] {
-  //   def pure[A](x: A): Parser[A] = {
-  //     return Parser[A]((cs => Some((x, cs))))
-  //   }
-  //   def flatMap[A, B](p: Parser[A])(f: A => Parser[B]): Parser[B] = {
-  //     return Parser[B](
-  //       (
-  //           cs =>
-  //             p.parse(cs) match {
-  //               case None           => None
-  //               case Some((x, cs2)) => f(x).parse(cs2)
-  //             }
-  //       )
-  //     )
-  //   }
-  //   def tailRecM[A, B](a: A)(f: A => Parser[Either[A, B]]): Parser[B] = ???
-  // }
 
   val item = Parser[Char](
     (
@@ -64,13 +68,19 @@ package object Syntax {
 
   def fun(pr: (Char => Boolean))(c: Char): Parser[Char] = {
     if (pr(c)) {
-      ParserMonad.pure(c)
+      Parser.pure(c)
     } else {
       Parser(cs2 => None)
     }
   }
 
   def sat(pr: (Char => Boolean)): Parser[Char] = {
-    ParserMonad.flatMap(item)(fun(pr))
+    Parser.flatMap(item)(fun(pr))
+  }
+
+  def sat2(pr: (Char => Boolean)): Parser[Char] = {
+    for {
+      c <- item
+    } yield c
   }
 }
