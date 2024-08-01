@@ -1,5 +1,4 @@
 package br.unb.cic.flang
-// import cats.Monad
 import cats.data.State
 
 package object StateMonad {
