@@ -62,7 +62,7 @@ package object Syntax {
         cs =>
           cs match {
             case ""  => None
-            case str => Some((str.charAt(0), str.slice(1, str.length)))
+            case str => Some((str.head, str.tail))
           }
     )
   )
@@ -85,4 +85,31 @@ package object Syntax {
       y <- if (pr(c)) Parser.pure(c) else failure
     } yield y
   }
+
+  def char(c: Char): Parser[Char] = {
+    sat(c2 => c == c2)
+  }
+
+  def string(str: String): Parser[String] = {
+    str match {
+      case "" => Parser.pure("")
+      case s => for {
+        _ <- char (s.head)
+        _ <- string (s.tail)
+      } yield s
+    }
+  }
+
+  def many[A](p: Parser[A]): Parser[List[A]] = {
+    many1(p) +++ Parser.pure(List())
+  }
+
+  def many1[A](p: Parser[A]): Parser[List[A]] = {
+    for {
+      a <- p
+      as <- many(p)
+    } yield a :: as
+  }
+
+  
 }
