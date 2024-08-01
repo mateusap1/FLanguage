@@ -3,6 +3,8 @@ package br.unb.cic.flang
 import Declarations._
 import StateMonad._
 import cats.data.State
+import cats.data.StateT
+import javax.naming.NameNotFoundException
 
 object Interpreter {
   /** This implementation relies on a state monad.
@@ -20,9 +22,10 @@ object Interpreter {
     * Sections 6.3 and 6.4 improves this implementation. We will left such an
     * improvements as an exercise.
     */
-  def eval(expr: Expr, declarations: List[FDeclaration]): State[StateData, Int] =
+  def eval(expr: Expr, declarations: List[FDeclaration]): StateOrError[Integer] =
     expr match {
-      case CInt(v) => State.pure[StateData, Int](v)
+      case CInt(v) => pure(v)
+      
       case Add(lhs, rhs) => for {
         l <- eval(lhs, declarations)
         r <- eval(rhs, declarations)
@@ -32,14 +35,14 @@ object Interpreter {
         r <- eval(rhs, declarations)
       } yield l * r
       case Id(name) => for {
-        state <- State.get[StateData]
-      } yield lookupVar(name, state)
+        state <- get
+      } yield lookupVar(name, state).fold(msg => throw new NameNotFoundException(msg), x => x)
       case App(name, arg) => {
         val fdecl = lookup(name, declarations)
         for {
           value <- eval(arg, declarations)
-          s1 <- State.get[StateData]
-          s2 <- State.set[StateData](declareVar(fdecl.arg, value, s1))
+          s1 <- get
+          s2 <- set(declareVar(fdecl.arg, value, s1))
           result <- eval(fdecl.body, declarations)
         } yield result
       }
