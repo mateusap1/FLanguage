@@ -112,22 +112,70 @@ package object Syntax {
     } yield a :: as
   }
 
-  def chainl[A](p: Parser[A])(op: Parser[A => A => A])(a: A): Parser[A] = {
+  def chainl[A](p: Parser[A])(op: Parser[(A, A) => A])(a: A): Parser[A] = {
     (chainl1(p)(op)) +++ Parser.pure(a)
   }
 
-  def rest[A](p: Parser[A])(op: Parser[A => A => A])(a: A): Parser[A] = {
+  def rest[A](p: Parser[A])(op: Parser[(A, A) => A])(a: A): Parser[A] = {
     (for {
       f <- op
       b <- p
-      r <- rest(p)(op)(f(a)(b))
+      r <- rest(p)(op)(f(a, b))
     } yield r) +++ Parser.pure(a)
   }
 
-  def chainl1[A](p: Parser[A])(op: Parser[A => A => A]): Parser[A] = {
+  def chainl1[A](p: Parser[A])(op: Parser[(A, A) => A]): Parser[A] = {
     for {
       a <- p
       r <- rest(p)(op)(a)
     } yield r
   }
+
+  val space: Parser[String] = {
+    for {
+      cs <- many(sat(c => c == ' '))
+    } yield cs.mkString
+  }
+
+  def token[A](p: Parser[A]): Parser[A] = {
+    for {
+      a <- p
+      _ <- space
+    } yield a
+  }
+
+  def symb(str: String): Parser[String] = {
+    token(string(str))
+  }
+
+  val addop = {
+    for {
+      _ <- symb("+")
+    } yield ((a: Expr, b: Expr) => Add(a, b).asInstanceOf[Expr])
+  }
+
+  val mulop = {
+    for {
+      _ <- symb("*")
+    } yield ((a: Expr, b: Expr) => Mul(a, b).asInstanceOf[Expr])
+  }
+
+  val digit: Parser[Expr] = {
+    for {
+      x <- token(sat(Character.isDigit))
+    } yield CInt(x.toInt - '0'.toInt)
+  }
+
+  val factor: Parser[Expr] = {
+    digit +++ (for {
+      _ <- symb("(")
+      exp <- expr
+      _ <- symb(")")
+    } yield exp)
+  }
+
+  val term: Parser[Expr] = chainl1(factor)(mulop)
+  val expr: Parser[Expr] = chainl1(term)(addop)
+
+  // addop = do {symb "+"; return (+)} +++ do {symb "-"; return (-)}
 }
