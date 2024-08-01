@@ -13,6 +13,7 @@ package object Syntax {
         )
       )
     }
+
     def flatMap[B](f: A => Parser[B]): Parser[B] = {
       return Parser[B](
         (
@@ -22,6 +23,19 @@ package object Syntax {
                 case Some((x, cs2)) => f(x).parse(cs2)
               }
         )
+      )
+    }
+
+    def +++(q: Parser[A]): Parser[A] = {
+      Parser[A](cs =>
+        this.parse(cs) match {
+          case None =>
+            q.parse(cs) match {
+              case None => None
+              case r    => r
+            }
+          case r => r
+        }
       )
     }
   }
@@ -53,17 +67,8 @@ package object Syntax {
     )
   )
 
-  def +++[A](p: Parser[A])(q: Parser[A]) {
-    Parser[A](cs =>
-      p.parse(cs) match {
-        case None =>
-          q.parse(cs) match {
-            case None => None
-            case r    => r
-          }
-        case r => r
-      }
-    )
+  def failure[A]() = {
+    Parser[A](_ => None)
   }
 
   def fun(pr: (Char => Boolean))(c: Char): Parser[Char] = {
@@ -75,12 +80,9 @@ package object Syntax {
   }
 
   def sat(pr: (Char => Boolean)): Parser[Char] = {
-    Parser.flatMap(item)(fun(pr))
-  }
-
-  def sat2(pr: (Char => Boolean)): Parser[Char] = {
     for {
       c <- item
-    } yield c
+      y <- if (pr(c)) Parser.pure(c) else failure
+    } yield y
   }
 }
