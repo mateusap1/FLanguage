@@ -93,10 +93,11 @@ package object Syntax {
   def string(str: String): Parser[String] = {
     str match {
       case "" => Parser.pure("")
-      case s => for {
-        _ <- char (s.head)
-        _ <- string (s.tail)
-      } yield s
+      case s =>
+        for {
+          _ <- char(s.head)
+          _ <- string(s.tail)
+        } yield s
     }
   }
 
@@ -111,5 +112,22 @@ package object Syntax {
     } yield a :: as
   }
 
-  
+  def chainl[A](p: Parser[A])(op: Parser[A => A => A])(a: A): Parser[A] = {
+    (chainl1(p)(op)) +++ Parser.pure(a)
+  }
+
+  def rest[A](p: Parser[A])(op: Parser[A => A => A])(a: A): Parser[A] = {
+    (for {
+      f <- op
+      b <- p
+      r <- rest(p)(op)(f(a)(b))
+    } yield r) +++ Parser.pure(a)
+  }
+
+  def chainl1[A](p: Parser[A])(op: Parser[A => A => A]): Parser[A] = {
+    for {
+      a <- p
+      r <- rest(p)(op)(a)
+    } yield r
+  }
 }
