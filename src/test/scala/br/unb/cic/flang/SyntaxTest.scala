@@ -41,4 +41,14 @@ class SyntaxTest extends AnyFlatSpec with should.Matchers {
     val res = parser parse("foofoobar")
     res should be (Some((List("foo", "foo"), "bar")))
   }
+
+  "expr parse(\"1 + 2\")" should "return Some(Add(CInt(1), CInt(2)), \"\")" in {
+    val res = apply(expr)("1 + 2")
+    res should be (Some((Add(CInt(1), CInt(2)), "")))
+  }
+
+  "expr parse(\" 2 * 3 + 4 \")" should "return Some((Add(Mul(CInt(2), CInt(3)), CInt(4)), \"\")" in {
+    val res = apply(expr)(" 2 * 3 + 4 ")
+    res should be (Some((Add(Mul(CInt(2), CInt(3)), CInt(4)), "")))
+  }
 }

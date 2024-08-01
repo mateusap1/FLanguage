@@ -148,6 +148,13 @@ package object Syntax {
     token(string(str))
   }
 
+  def apply[A](p: Parser[A])(str: String): Option[(A, String)] = {
+    (for {
+      _ <- space
+      r <- p
+    } yield r).parse(str)
+  }
+
   val addop = {
     for {
       _ <- symb("+")
@@ -176,6 +183,4 @@ package object Syntax {
 
   val term: Parser[Expr] = chainl1(factor)(mulop)
   val expr: Parser[Expr] = chainl1(term)(addop)
-
-  // addop = do {symb "+"; return (+)} +++ do {symb "-"; return (-)}
 }
