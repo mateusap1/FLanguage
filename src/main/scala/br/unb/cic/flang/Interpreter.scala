@@ -1,5 +1,6 @@
 package br.unb.cic.flang
 
+import Term._
 import Declarations._
 import StateOrErrorMonad._
 import cats.data.State
@@ -26,30 +27,41 @@ object Interpreter {
   def eval(
       expr: Expr,
       declarations: List[FDeclaration]
-  ): StateOrError[Integer] =
+  ): StateOrError[Term] =
     expr match {
-      case CInt(v) => pure(v)
+      case CInt(t) => pure(t)
 
       case Add(lhs, rhs) =>
         for {
           l <- eval(lhs, declarations)
           r <- eval(rhs, declarations)
-        } yield l + r
+          v <- parseErrorOr(for {
+            a <- parseInt(l)
+            b <- parseInt(r)
+          } yield a + b)
+        } yield TInt(v)
+
       case Mul(lhs, rhs) =>
         for {
           l <- eval(lhs, declarations)
           r <- eval(rhs, declarations)
-        } yield l * r
+          v <- parseErrorOr(for {
+            a <- parseInt(l)
+            b <- parseInt(r)
+          } yield a * b)
+        } yield TInt(v)
+
       case Id(name) =>
         for {
           state <- get
-          result <- StateT[ErrorOr, StateData, Integer](s =>
+          result <- StateT[ErrorOr, StateData, Term](s =>
             lookupVar(name, state) match {
               case Left(err) => Left(err)
               case Right(n)  => Right((s, n))
             }
           )
         } yield result
+
       case App(name, arg) => {
         val fdecl = lookup(name, declarations)
         fdecl match {

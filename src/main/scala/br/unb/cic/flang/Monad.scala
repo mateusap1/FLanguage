@@ -9,7 +9,7 @@ import java.util.concurrent.Future
 import javax.naming.InvalidNameException
 
 package object StateOrErrorMonad {
-  type StateData = List[(String, Integer)]
+  type StateData = List[(String, Term)]
   type ErrorOr[A] = Either[String, A]
 
   type StateOrError[A] = StateT[ErrorOr, StateData, A]
@@ -24,10 +24,21 @@ package object StateOrErrorMonad {
     StateT[ErrorOr, StateData, A](_ => Left(error))
   }
 
-  def declareVar(name: String, value: Integer, state: StateData): StateData =
+  def assertValue[A](value: A): StateOrError[A] = {
+    StateT.pure(value)
+  }
+
+  def parseErrorOr[A](value: ErrorOr[A]): StateOrError[A] = {
+    value match {
+      case Left(err) => assertError(err)
+      case Right(v) => assertValue(v)
+    }
+  }
+
+  def declareVar(name: String, value: Term, state: StateData): StateData =
     (name, value) :: state
 
-  def lookupVar(name: String, state: StateData): ErrorOr[Integer] =
+  def lookupVar(name: String, state: StateData): ErrorOr[Term] =
     state match {
       case List()                      => Left(s"Variable $name not found")
       case (n, v) :: tail if n == name => Right(v)
