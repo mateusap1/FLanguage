@@ -76,4 +76,22 @@ class InterpreterTest extends AnyFlatSpec with should.Matchers {
     val res = eval(ifthenelse, declarations).runA(initialState)
     res should be(Right(TInt(1)))
   }
+
+  "eval IfThenElse(CBool(false), CInt(1), CInt(2))" should "return an integer value 2" in {
+    val cfalse = CInt(TBool(false))
+    val c1 = CInt(TInt(1))
+    val c2 = CInt(TInt(2))
+    val ifthenelse = IfThenElse(cfalse, c1, c2)
+    val res = eval(ifthenelse, declarations).runA(initialState)
+    res should be(Right(TInt(2)))
+  }
+
+  "eval IfThenElse(CInt(0), CInt(1), CInt(2))" should "raise an error." in {
+    val c0 = CInt(TInt(0))
+    val c1 = CInt(TInt(1))
+    val c2 = CInt(TInt(2))
+    val ifthenelse = IfThenElse(c0, c1, c2)
+    val res = eval(ifthenelse, declarations).runA(initialState)
+    res should be(Left("Type Error: Failed to parse boolean"))
+  }
 }
