@@ -8,7 +8,7 @@ import cats.data.EitherT
 import java.util.concurrent.Future
 import javax.naming.InvalidNameException
 
-package object StateMonad {
+package object StateOrErrorMonad {
   type StateData = List[(String, Integer)]
   type ErrorOr[A] = Either[String, A]
 
@@ -19,6 +19,10 @@ package object StateMonad {
   def get: StateOrError[StateData] = StateT.get
 
   def set[A](state: StateData): StateOrError[Unit] = StateT.set(state)
+
+  def assertError[A](error: String): StateOrError[A] = {
+    StateT[ErrorOr, StateData, A](_ => Left(error))
+  }
 
   def declareVar(name: String, value: Integer, state: StateData): StateData =
     (name, value) :: state

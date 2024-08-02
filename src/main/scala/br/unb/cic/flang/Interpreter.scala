@@ -1,12 +1,13 @@
 package br.unb.cic.flang
 
 import Declarations._
-import StateMonad._
+import StateOrErrorMonad._
 import cats.data.State
 import cats.data.StateT
 import javax.naming.NameNotFoundException
 
 object Interpreter {
+
   /** This implementation relies on a state monad.
     *
     * Here we replace the substitution function (that needs to traverse the AST
@@ -22,35 +23,45 @@ object Interpreter {
     * Sections 6.3 and 6.4 improves this implementation. We will left such an
     * improvements as an exercise.
     */
-  def eval(expr: Expr, declarations: List[FDeclaration]): StateOrError[Integer] =
+  def eval(
+      expr: Expr,
+      declarations: List[FDeclaration]
+  ): StateOrError[Integer] =
     expr match {
       case CInt(v) => pure(v)
-      
-      case Add(lhs, rhs) => for {
-        l <- eval(lhs, declarations)
-        r <- eval(rhs, declarations)
-      } yield l + r
-      case Mul(lhs, rhs) => for {
-        l <- eval(lhs, declarations)
-        r <- eval(rhs, declarations)
-      } yield l * r
-      case Id(name) => for {
-        state <- get
-        result <- StateT[ErrorOr, StateData, Integer](s =>
-          lookupVar(name, state) match {
-            case Left(err) => Left(err)
-            case Right(n) => Right((s, n))
-          }
-        )
-      } yield result
+
+      case Add(lhs, rhs) =>
+        for {
+          l <- eval(lhs, declarations)
+          r <- eval(rhs, declarations)
+        } yield l + r
+      case Mul(lhs, rhs) =>
+        for {
+          l <- eval(lhs, declarations)
+          r <- eval(rhs, declarations)
+        } yield l * r
+      case Id(name) =>
+        for {
+          state <- get
+          result <- StateT[ErrorOr, StateData, Integer](s =>
+            lookupVar(name, state) match {
+              case Left(err) => Left(err)
+              case Right(n)  => Right((s, n))
+            }
+          )
+        } yield result
       case App(name, arg) => {
         val fdecl = lookup(name, declarations)
-        for {
-          value <- eval(arg, declarations)
-          s1 <- get
-          s2 <- set(declareVar(fdecl.arg, value, s1))
-          result <- eval(fdecl.body, declarations)
-        } yield result
+        fdecl match {
+          case Left(err) => assertError(err)
+          case Right(fdeclR) =>
+            for {
+              value <- eval(arg, declarations)
+              s1 <- get
+              s2 <- set(declareVar(fdeclR.arg, value, s1))
+              result <- eval(fdeclR.body, declarations)
+            } yield result
+        }
       }
     }
 }

@@ -6,14 +6,15 @@ import matchers._
 
 import Interpreter._
 import Declarations._
-import StateMonad._
+import StateOrErrorMonad._
 import cats.data.State
 
 class InterpreterTest extends AnyFlatSpec with should.Matchers {
 
   val inc = FDeclaration("inc", "x", Add(Id("x"), CInt(1)))
+  val bug = FDeclaration("bug", "x", Add(Id("y"), CInt(1)))
 
-  val declarations = List(inc)
+  val declarations = List(inc, bug)
 
   val initialState: StateData = List()
 
@@ -51,5 +52,19 @@ class InterpreterTest extends AnyFlatSpec with should.Matchers {
     val app = App("inc", CInt(99))
     val res = eval(app, declarations).runA(initialState)
     res should be (Right(100))
+  }
+
+  "eval App(foo, 10) " should "raise an error." in {
+    val app = App("foo", CInt(10))
+    val res = eval(app, declarations).runA(initialState)
+    res should be (Left("Function foo is not declared"))
+  }
+
+  "eval Add(5, App(bug, 10)) " should "raise an error." in {
+    val c5  = CInt(5)
+    val app = App("bug", CInt(10))
+    val add = Add(c5, app)
+    val res = eval(app, declarations).runA(initialState)
+    res should be (Left("Variable y not found"))
   }
 }
