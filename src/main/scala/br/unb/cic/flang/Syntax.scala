@@ -1,5 +1,7 @@
 package br.unb.cic.flang
 
+import scala.util.{Try, Success, Failure}
+
 package object Syntax {
   case class Parser[A](parse: (String => Option[(A, String)])) {
     def map[B](f: A => B): Parser[B] = {
@@ -69,14 +71,6 @@ package object Syntax {
 
   def failure[A]() = {
     Parser[A](_ => None)
-  }
-
-  def fun(pr: (Char => Boolean))(c: Char): Parser[Char] = {
-    if (pr(c)) {
-      Parser.pure(c)
-    } else {
-      Parser(cs2 => None)
-    }
   }
 
   def sat(pr: (Char => Boolean)): Parser[Char] = {
@@ -173,14 +167,45 @@ package object Syntax {
     } yield CTerm(TInt(x.toInt - '0'.toInt))
   }
 
+  val digitstr: Parser[Expr] = {
+    for {
+      cs <- many1(sat(Character.isDigit))
+      _ <- space
+      r <- (Try(cs.mkString.toInt) match {
+        case Success(v)   => Parser.pure(CTerm(TInt(v)))
+        case Failure(err) => Parser[Expr](_ => None)
+      })
+    } yield r
+  }
+
+  val alphastr: Parser[String] = {
+    for {
+      cs <- many(sat(Character.isLetter))
+      _ <- space
+    } yield cs.mkString
+  }
+
   val factor: Parser[Expr] = {
-    digit +++ (for {
+    digitstr +++ (for {
       _ <- symb("(")
       exp <- expr
       _ <- symb(")")
     } yield exp)
   }
 
+  // We should handle digits of more than one character
+
   val term: Parser[Expr] = chainl1(factor)(mulop)
   val expr: Parser[Expr] = chainl1(term)(addop)
+
+  // val fdecl: Parser[String] = ???
+
+  // val fname: Parser[String] = for {
+  //   _ <- symb("func")
+
+  // }
+  // val farg: Parser[String] = ???
+
+  // val func: Parser[FDeclaration] = ???
+  // val program: Parser[List[FDeclaration]] = ???
 }

@@ -42,9 +42,24 @@ class SyntaxTest extends AnyFlatSpec with should.Matchers {
     res should be (Some((List("foo", "foo"), "bar")))
   }
 
+  "alphastr parse(\"blah blah blah\")" should "return Some((\"blah\", \"blah blah\"))" in {
+    val res = alphastr parse("blah blah blah")
+    res should be (Some(("blah", "blah blah")))
+  }
+
+  "expr parse(\" 1 \")" should "return Some(CTerm(TInt(1))), \"\")" in {
+    val res = apply(expr)(" 1 ")
+    res should be (Some(CTerm(TInt(1)), ""))
+  }
+
   "expr parse(\"1 + 2\")" should "return Some(Add(CInt(1), CInt(2)), \"\")" in {
     val res = apply(expr)("1 + 2")
     res should be (Some((Add(CTerm(TInt(1)), CTerm(TInt(2))), "")))
+  }
+
+  "expr parse(\"12 + 23\")" should "return Some(Add(CInt(12), CInt(23)), \"\")" in {
+    val res = apply(expr)("12 + 23")
+    res should be (Some((Add(CTerm(TInt(12)), CTerm(TInt(23))), "")))
   }
 
   "expr parse(\" 2 * 3 + 4 \")" should "return Some((Add(Mul(CInt(2), CInt(3)), CInt(4)), \"\")" in {
