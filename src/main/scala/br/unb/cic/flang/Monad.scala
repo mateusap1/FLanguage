@@ -20,15 +20,9 @@ package object StateMonad {
 
   def set[A](state: StateData): StateOrError[Unit] = StateT.set(state)
 
-  def valueF[A](value: ErrorOr[A]): A = value match {
-    case Left(value) => throw new NameNotFoundException(value)
-    case Right(value) => value
-  } 
-
   def declareVar(name: String, value: Integer, state: StateData): StateData = 
     (name, value) :: state
   
-
   def lookupVar(name: String, state: StateData): ErrorOr[Integer] = state match {
     case List()                      => Left(s"Variable $name not found")
     case (n, v) :: tail if n == name => Right(v)
