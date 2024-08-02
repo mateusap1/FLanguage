@@ -108,11 +108,36 @@ class SyntaxTest extends AnyFlatSpec with should.Matchers {
     res should be(Some((("coolfunc", "arg"), "")))
   }
 
-  "func parse(\"func coolfunc(arg)\")" should "return Some((FDeclaration(\"coolfunc\", \"arg\", expr), \"\"))" in {
+  "func parse(\"func coolfunc(arg) = 1 + 3\")" should "return Some((FDeclaration(\"coolfunc\", \"arg\", expr), \"\"))" in {
     val res = func parse ("func coolfunc(arg) = 1 + 3")
     val c1 = CTerm(TInt(1))
     val c3 = CTerm(TInt(3))
     val expr = Add(c1, c3)
     res should be(Some((FDeclaration("coolfunc", "arg", expr), "")))
+  }
+
+  "func parse(\"func coolfunc(arg) = 1 + 3\nfunc otherfunc(arg) = 2 * 6\")" should "return Some((FDeclaration(\"coolfunc\", \"arg\", expr), \"\"))" in {
+    val res =
+      prog parse ("func coolfunc(arg) = 1 + 3\nfunc otherfunc(arg) = 2 * 6")
+
+    val c1 = CTerm(TInt(1))
+    val c3 = CTerm(TInt(3))
+    val expr1 = Add(c1, c3)
+
+    val c2 = CTerm(TInt(2))
+    val c6 = CTerm(TInt(6))
+    val expr2 = Mul(c2, c6)
+
+    res should be(
+      Some(
+        (
+          List(
+            FDeclaration("coolfunc", "arg", expr1),
+            FDeclaration("otherfunc", "arg", expr2)
+          ),
+          ""
+        )
+      )
+    )
   }
 }

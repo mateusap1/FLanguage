@@ -131,6 +131,12 @@ package object Syntax {
     } yield cs.mkString
   }
 
+  val blank: Parser[String] = {
+    for {
+      cs <- many(sat(c => c == '\n'))
+    } yield cs.mkString
+  }
+
   def token[A](p: Parser[A]): Parser[A] = {
     for {
       a <- p
@@ -241,7 +247,12 @@ package object Syntax {
     body <- expr
   } yield (FDeclaration(decl._1, decl._2, body))
 
-  // Adicionar if then else
+  val prog: Parser[List[FDeclaration]] = many(for {
+    _ <- blank
+    f <- func
+    _ <- blank
+  } yield f)
+
   // Adicionar programa
 
   // val program: Parser[List[FDeclaration]] = ???
