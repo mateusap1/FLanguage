@@ -207,8 +207,19 @@ package object Syntax {
     } yield exp)
   }
 
+  def ifthenelse(): Parser[Expr] = {
+    for {
+      _ <- symb("if")
+      pred <- expr
+      _ <- symb("then")
+      thenBranch <- expr
+      _ <- symb("else")
+      elseBranch <- expr
+    } yield IfThenElse(pred, thenBranch, elseBranch)
+  }
+
   val term: Parser[Expr] = chainl1(factor)(mulop)
-  val expr: Parser[Expr] = chainl1(term)(addop)
+  val expr: Parser[Expr] = ifthenelse() +++ chainl1(term)(addop)
 
   val fdecl: Parser[(String, String)] = for {
     _ <- symb("func")
@@ -230,9 +241,6 @@ package object Syntax {
     body <- expr
   } yield (FDeclaration(decl._1, decl._2, body))
 
-
-
-  // Adicionar booleano
   // Adicionar if then else
   // Adicionar programa
 
