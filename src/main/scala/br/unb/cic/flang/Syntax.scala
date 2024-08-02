@@ -198,14 +198,17 @@ package object Syntax {
   val term: Parser[Expr] = chainl1(factor)(mulop)
   val expr: Parser[Expr] = chainl1(term)(addop)
 
-  // val fdecl: Parser[String] = ???
+  val fdecl: Parser[(String, String)] = for {
+    _ <- symb("func")
+    _ <- space
+    name <- fname
+    _ <- symb("(")
+    arg <- farg
+    _ <- symb(")")
+  } yield (name, arg)
 
-  // val fname: Parser[String] = for {
-  //   _ <- symb("func")
-  //   _ <- space
-  //   n <- alphastr
-  // } yield n
-  // val farg: Parser[String] = ???
+  val fname: Parser[String] = alphastr
+  val farg: Parser[String] = alphastr
 
   // val func: Parser[FDeclaration] = ???
   // val program: Parser[List[FDeclaration]] = ???
