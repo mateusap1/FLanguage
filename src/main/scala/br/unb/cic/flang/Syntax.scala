@@ -202,8 +202,9 @@ package object Syntax {
 
   // val fname: Parser[String] = for {
   //   _ <- symb("func")
-
-  // }
+  //   _ <- space
+  //   n <- alphastr
+  // } yield n
   // val farg: Parser[String] = ???
 
   // val func: Parser[FDeclaration] = ???

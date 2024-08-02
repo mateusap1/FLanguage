@@ -47,23 +47,32 @@ class SyntaxTest extends AnyFlatSpec with should.Matchers {
     res should be (Some(("blah", "blah blah")))
   }
 
-  "expr parse(\" 1 \")" should "return Some(CTerm(TInt(1))), \"\")" in {
+  "expr parse(\" 1 \")" should "return Some(1), \"\")" in {
     val res = apply(expr)(" 1 ")
     res should be (Some(CTerm(TInt(1)), ""))
   }
 
-  "expr parse(\"1 + 2\")" should "return Some(Add(CInt(1), CInt(2)), \"\")" in {
+  "expr parse(\"1 + 2\")" should "return Some(Add(1, 2), \"\")" in {
     val res = apply(expr)("1 + 2")
     res should be (Some((Add(CTerm(TInt(1)), CTerm(TInt(2))), "")))
   }
 
-  "expr parse(\"12 + 23\")" should "return Some(Add(CInt(12), CInt(23)), \"\")" in {
+  "expr parse(\"12 + 23\")" should "return Some(Add(12, 23), \"\")" in {
     val res = apply(expr)("12 + 23")
     res should be (Some((Add(CTerm(TInt(12)), CTerm(TInt(23))), "")))
   }
 
-  "expr parse(\" 2 * 3 + 4 \")" should "return Some((Add(Mul(CInt(2), CInt(3)), CInt(4)), \"\")" in {
+  "expr parse(\" 2 * 3 + 4 \")" should "return Some((Add(Mul(2, 3), 4), \"\")" in {
     val res = apply(expr)(" 2 * 3 + 4 ")
     res should be (Some((Add(Mul(CTerm(TInt(2)), CTerm(TInt(3))), CTerm(TInt(4))), "")))
+  }
+
+  "expr parse(\" 2 * (3 + 4) \")" should "return Some((Mul(2, Add(3, 4)), \"\")" in {
+    val res = apply(expr)(" 2 * (3 + 4) ")
+    val c2 = CTerm(TInt(2))
+    val c3 = CTerm(TInt(3))
+    val c4 = CTerm(TInt(4))
+
+    res should be (Some((Mul(c2, Add(c3, c4)), "")))
   }
 }
