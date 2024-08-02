@@ -42,8 +42,8 @@ class SyntaxTest extends AnyFlatSpec with should.Matchers {
     res should be (Some((List("foo", "foo"), "bar")))
   }
 
-  "alphastr parse(\"blah blah blah\")" should "return Some((\"blah\", \"blah blah\"))" in {
-    val res = alphastr parse("blah blah blah")
+  "alpha parse(\"blah blah blah\")" should "return Some((\"blah\", \"blah blah\"))" in {
+    val res = alpha parse("blah blah blah")
     res should be (Some(("blah", "blah blah")))
   }
 

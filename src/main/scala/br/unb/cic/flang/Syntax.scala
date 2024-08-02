@@ -161,13 +161,14 @@ package object Syntax {
     } yield ((a: Expr, b: Expr) => Mul(a, b).asInstanceOf[Expr])
   }
 
-  val digit: Parser[Expr] = {
+  val alpha: Parser[String] = {
     for {
-      x <- token(sat(Character.isDigit))
-    } yield CTerm(TInt(x.toInt - '0'.toInt))
+      cs <- many1(sat(Character.isLetter))
+      _ <- space
+    } yield cs.mkString
   }
 
-  val digitstr: Parser[Expr] = {
+  val digit: Parser[Expr] = {
     for {
       cs <- many1(sat(Character.isDigit))
       _ <- space
@@ -178,28 +179,33 @@ package object Syntax {
     } yield r
   }
 
-  val alphastr: Parser[String] = {
+  val btrue: Parser[Expr] = {
     for {
-      cs <- many1(sat(Character.isLetter))
-      _ <- space
-    } yield cs.mkString
+      _ <- symb("true")
+    } yield CTerm(TBool(true))
   }
+
+  val bfalse: Parser[Expr] = {
+    for {
+      _ <- symb("false")
+    } yield CTerm(TBool(true))
+  }
+
+  val boolean: Parser[Expr] = btrue +++ bfalse
 
   val variable: Parser[Expr] = {
     for {
-      s <- alphastr
+      s <- alpha
     } yield Id(s)
   }
 
   val factor: Parser[Expr] = {
-    digitstr +++ variable +++ (for {
+    digit +++ boolean +++ variable +++ (for {
       _ <- symb("(")
       exp <- expr
       _ <- symb(")")
     } yield exp)
   }
-
-  // We should handle digits of more than one character
 
   val term: Parser[Expr] = chainl1(factor)(mulop)
   val expr: Parser[Expr] = chainl1(term)(addop)
@@ -213,8 +219,8 @@ package object Syntax {
     _ <- symb(")")
   } yield (name, arg)
 
-  val fname: Parser[String] = alphastr
-  val farg: Parser[String] = alphastr
+  val fname: Parser[String] = alpha
+  val farg: Parser[String] = alpha
 
   val func: Parser[FDeclaration] = for {
     decl <- fdecl
@@ -224,7 +230,11 @@ package object Syntax {
     body <- expr
   } yield (FDeclaration(decl._1, decl._2, body))
 
-  // Adicionar variável e booleano
+
+
+  // Adicionar booleano
+  // Adicionar if then else
+  // Adicionar programa
 
   // val program: Parser[List[FDeclaration]] = ???
 }
