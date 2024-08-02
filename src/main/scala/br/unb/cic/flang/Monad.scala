@@ -20,14 +20,6 @@ package object StateMonad {
 
   def set[A](state: StateData): StateOrError[Unit] = StateT.set(state)
 
-  def foo() = {
-    val name = "blah"
-    val test: StateOrError[Integer] =
-      StateT[ErrorOr, StateData, Integer](s =>
-        Left(s"Variable $name not found")
-      )
-  }
-
   def declareVar(name: String, value: Integer, state: StateData): StateData =
     (name, value) :: state
 
