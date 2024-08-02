@@ -67,4 +67,13 @@ class InterpreterTest extends AnyFlatSpec with should.Matchers {
     val res = eval(app, declarations).runA(initialState)
     res should be (Left("Variable y not found"))
   }
+
+  "eval IfThenElse(CBool(true), CInt(1), CInt(2))" should "return an integer value 1" in {
+    val ctrue = CInt(TBool(true))
+    val c1 = CInt(TInt(1))
+    val c2 = CInt(TInt(2))
+    val ifthenelse = IfThenElse(ctrue, c1, c2)
+    val res = eval(ifthenelse, declarations).runA(initialState)
+    res should be(Right(TInt(1)))
+  }
 }
