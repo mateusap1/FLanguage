@@ -75,5 +75,17 @@ object Interpreter {
             } yield result
         }
       }
+
+      case CBool(t) => pure(t)
+
+      case IfThenElse(pr: Expr, thenBranch: Expr, elseBranch: Expr) => {
+        for {
+          predicate <- eval(pr, declarations)
+          result <- parseBool(predicate) match {
+            case Left(err) => assertError(err)
+            case Right(v) => if (v) eval(thenBranch, declarations) else eval(elseBranch, declarations)
+          }
+        } yield result
+      }
     }
 }
