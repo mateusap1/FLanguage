@@ -170,7 +170,7 @@ package object Syntax {
   val digit: Parser[Expr] = {
     for {
       x <- token(sat(Character.isDigit))
-    } yield CInt(x.toInt - '0'.toInt)
+    } yield CInt(TInt(x.toInt - '0'.toInt))
   }
 
   val factor: Parser[Expr] = {
