@@ -80,4 +80,12 @@ class SyntaxTest extends AnyFlatSpec with should.Matchers {
     val res = fdecl parse("func coolfunc(arg)")
     res should be (Some((("coolfunc", "arg"), "")))
   }
+
+  "func parse(\"func coolfunc(arg)\")" should "return Some((FDeclaration(\"coolfunc\", \"arg\", expr), \"\"))" in {
+    val res = func parse("func coolfunc(arg) = 1 + 3")
+    val c1 = CTerm(TInt(1))
+    val c3 = CTerm(TInt(3))
+    val expr = Add(c1, c3)
+    res should be (Some((FDeclaration("coolfunc", "arg", expr), "")))
+  }
 }

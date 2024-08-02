@@ -210,6 +210,12 @@ package object Syntax {
   val fname: Parser[String] = alphastr
   val farg: Parser[String] = alphastr
 
-  // val func: Parser[FDeclaration] = ???
+  val func: Parser[FDeclaration] = for {
+    decl <- fdecl
+    _ <- space
+    _ <- symb("=")
+    _ <- space
+    body <- expr
+  } yield (FDeclaration(decl._1, decl._2, body))
   // val program: Parser[List[FDeclaration]] = ???
 }
