@@ -180,13 +180,19 @@ package object Syntax {
 
   val alphastr: Parser[String] = {
     for {
-      cs <- many(sat(Character.isLetter))
+      cs <- many1(sat(Character.isLetter))
       _ <- space
     } yield cs.mkString
   }
 
+  val variable: Parser[Expr] = {
+    for {
+      s <- alphastr
+    } yield Id(s)
+  }
+
   val factor: Parser[Expr] = {
-    digitstr +++ (for {
+    digitstr +++ variable +++ (for {
       _ <- symb("(")
       exp <- expr
       _ <- symb(")")
@@ -217,5 +223,8 @@ package object Syntax {
     _ <- space
     body <- expr
   } yield (FDeclaration(decl._1, decl._2, body))
+
+  // Adicionar variável e booleano
+
   // val program: Parser[List[FDeclaration]] = ???
 }
