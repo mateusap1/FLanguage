@@ -252,8 +252,4 @@ package object Syntax {
     f <- func
     _ <- blank
   } yield f)
-
-  // Adicionar programa
-
-  // val program: Parser[List[FDeclaration]] = ???
 }
