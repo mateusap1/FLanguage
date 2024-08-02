@@ -29,7 +29,7 @@ object Interpreter {
       declarations: List[FDeclaration]
   ): StateOrError[Term] =
     expr match {
-      case CInt(t) => pure(t)
+      case CTerm(t) => pure(t)
 
       case Add(lhs, rhs) =>
         for {
@@ -75,8 +75,6 @@ object Interpreter {
             } yield result
         }
       }
-
-      case CBool(t) => pure(t)
 
       case IfThenElse(pr: Expr, thenBranch: Expr, elseBranch: Expr) => {
         for {
