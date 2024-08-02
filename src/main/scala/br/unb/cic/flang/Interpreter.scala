@@ -1,10 +1,14 @@
 package br.unb.cic.flang
 
+import Term._
 import Declarations._
-import StateMonad._
+import StateOrErrorMonad._
 import cats.data.State
+import cats.data.StateT
+import javax.naming.NameNotFoundException
 
 object Interpreter {
+
   /** This implementation relies on a state monad.
     *
     * Here we replace the substitution function (that needs to traverse the AST
@@ -20,27 +24,67 @@ object Interpreter {
     * Sections 6.3 and 6.4 improves this implementation. We will left such an
     * improvements as an exercise.
     */
-  def eval(expr: Expr, declarations: List[FDeclaration]): State[StateData, Int] =
+  def eval(
+      expr: Expr,
+      declarations: List[FDeclaration]
+  ): StateOrError[Term] =
     expr match {
-      case CInt(v) => State.pure[StateData, Int](v)
-      case Add(lhs, rhs) => for {
-        l <- eval(lhs, declarations)
-        r <- eval(rhs, declarations)
-      } yield l + r
-      case Mul(lhs, rhs) => for {
-        l <- eval(lhs, declarations)
-        r <- eval(rhs, declarations)
-      } yield l * r
-      case Id(name) => for {
-        state <- State.get[StateData]
-      } yield lookupVar(name, state)
+      case CInt(t) => pure(t)
+
+      case Add(lhs, rhs) =>
+        for {
+          l <- eval(lhs, declarations)
+          r <- eval(rhs, declarations)
+          v <- parseErrorOr(for {
+            a <- parseInt(l)
+            b <- parseInt(r)
+          } yield a + b)
+        } yield TInt(v)
+
+      case Mul(lhs, rhs) =>
+        for {
+          l <- eval(lhs, declarations)
+          r <- eval(rhs, declarations)
+          v <- parseErrorOr(for {
+            a <- parseInt(l)
+            b <- parseInt(r)
+          } yield a * b)
+        } yield TInt(v)
+
+      case Id(name) =>
+        for {
+          state <- get
+          result <- StateT[ErrorOr, StateData, Term](s =>
+            lookupVar(name, state) match {
+              case Left(err) => Left(err)
+              case Right(n)  => Right((s, n))
+            }
+          )
+        } yield result
+
       case App(name, arg) => {
         val fdecl = lookup(name, declarations)
+        fdecl match {
+          case Left(err) => assertError(err)
+          case Right(fdeclR) =>
+            for {
+              value <- eval(arg, declarations)
+              s1 <- get
+              s2 <- set(declareVar(fdeclR.arg, value, s1))
+              result <- eval(fdeclR.body, declarations)
+            } yield result
+        }
+      }
+
+      case CBool(t) => pure(t)
+
+      case IfThenElse(pr: Expr, thenBranch: Expr, elseBranch: Expr) => {
         for {
-          value <- eval(arg, declarations)
-          s1 <- State.get[StateData]
-          s2 <- State.set[StateData](declareVar(fdecl.arg, value, s1))
-          result <- eval(fdecl.body, declarations)
+          predicate <- eval(pr, declarations)
+          result <- parseBool(predicate) match {
+            case Left(err) => assertError(err)
+            case Right(v) => if (v) eval(thenBranch, declarations) else eval(elseBranch, declarations)
+          }
         } yield result
       }
     }
