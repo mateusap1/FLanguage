@@ -20,12 +20,21 @@ package object StateMonad {
 
   def set[A](state: StateData): StateOrError[Unit] = StateT.set(state)
 
-  def declareVar(name: String, value: Integer, state: StateData): StateData = 
+  def foo() = {
+    val name = "blah"
+    val test: StateOrError[Integer] =
+      StateT[ErrorOr, StateData, Integer](s =>
+        Left(s"Variable $name not found")
+      )
+  }
+
+  def declareVar(name: String, value: Integer, state: StateData): StateData =
     (name, value) :: state
-  
-  def lookupVar(name: String, state: StateData): ErrorOr[Integer] = state match {
-    case List()                      => Left(s"Variable $name not found")
-    case (n, v) :: tail if n == name => Right(v)
-    case _ :: tail                   => lookupVar(name, tail)  
-  }     
+
+  def lookupVar(name: String, state: StateData): ErrorOr[Integer] =
+    state match {
+      case List()                      => Left(s"Variable $name not found")
+      case (n, v) :: tail if n == name => Right(v)
+      case _ :: tail                   => lookupVar(name, tail)
+    }
 }

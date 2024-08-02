@@ -36,7 +36,13 @@ object Interpreter {
       } yield l * r
       case Id(name) => for {
         state <- get
-      } yield lookupVar(name, state).fold(msg => throw new NameNotFoundException(msg), x => x)
+        result <- StateT[ErrorOr, StateData, Integer](s =>
+          lookupVar(name, state) match {
+            case Left(err) => Left(err)
+            case Right(n) => Right((s, n))
+          }
+        )
+      } yield result
       case App(name, arg) => {
         val fdecl = lookup(name, declarations)
         for {
