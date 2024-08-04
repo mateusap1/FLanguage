@@ -194,7 +194,7 @@ package object Syntax {
   val bfalse: Parser[Expr] = {
     for {
       _ <- symb("false")
-    } yield CTerm(TBool(true))
+    } yield CTerm(TBool(false))
   }
 
   val boolean: Parser[Expr] = btrue +++ bfalse
