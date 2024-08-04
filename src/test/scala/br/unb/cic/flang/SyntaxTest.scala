@@ -87,6 +87,15 @@ class SyntaxTest extends AnyFlatSpec with should.Matchers {
     res should be(Some((Mul(c2, Add(cx, c4)), "")))
   }
 
+  "expr parse(\" 2 * cf(true) \")" should "return Some(Mul(2, App(cf, true)), \"\")" in {
+    val res = apply(expr)(" 2 * cf(true) ")
+    val c2 = CTerm(TInt(2))
+    val cf = App("cf", CTerm(TBool(true)))
+    val exp = Mul(c2, cf)
+
+    res should be(Some((exp, "")))
+  }
+
   "expr parse(\"if true then 1 else 4\")" should "return Some(IfThenElse(true, 1, 4), \"\")" in {
     val res = apply(expr)("if true then 1 else 4")
     val ctrue = CTerm(TBool(true))
@@ -101,6 +110,20 @@ class SyntaxTest extends AnyFlatSpec with should.Matchers {
     val expr1 = Add(CTerm(TInt(1)), CTerm(TInt(2)))
     val expr2 = Add(Mul(CTerm(TInt(4)), CTerm(TInt(6))), CTerm(TInt(1)))
     res should be(Some(IfThenElse(cx, expr1, expr2), ""))
+  }
+
+  "expr parse(\"if coolfunc((if x then 1 else 0) * (2 + 1)) then false else true\")" should "return Some(IfThenElse(x, 1 + 2, 4 * 6 + 1), \"\")" in {
+    val res = apply(expr)(
+      "if coolfunc((if x then 1 else 0) * (2 + 1)) then false else true"
+    )
+    val cx = Id("x")
+    val exp = Mul(
+      IfThenElse(Id("x"), CTerm(TInt(1)), CTerm(TInt(0))),
+      Add(CTerm(TInt(2)), CTerm(TInt(1)))
+    )
+    val cf = App("coolfunc", exp)
+    val ite = IfThenElse(cf, CTerm(TBool(false)), CTerm(TBool(true)))
+    res should be(Some(ite, ""))
   }
 
   "fdecl parse(\"func coolfunc(arg)\")" should "return Some(((\"coolfunc\", \"arg\"), \"\"))" in {

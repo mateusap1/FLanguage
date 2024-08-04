@@ -194,7 +194,7 @@ package object Syntax {
   val bfalse: Parser[Expr] = {
     for {
       _ <- symb("false")
-    } yield CTerm(TBool(true))
+    } yield CTerm(TBool(false))
   }
 
   val boolean: Parser[Expr] = btrue +++ bfalse
@@ -205,8 +205,17 @@ package object Syntax {
     } yield Id(s)
   }
 
+  def funCall(): Parser[Expr] = {
+    for {
+      n <- alpha
+      _ <- symb("(")
+      arg <- expr
+      _ <- symb(")")
+    } yield App(n, arg)
+  }
+
   val factor: Parser[Expr] = {
-    digit +++ boolean +++ variable +++ (for {
+    digit +++ boolean +++ funCall() +++ variable +++ (for {
       _ <- symb("(")
       exp <- expr
       _ <- symb(")")
@@ -224,8 +233,8 @@ package object Syntax {
     } yield IfThenElse(pred, thenBranch, elseBranch)
   }
 
-  val term: Parser[Expr] = chainl1(factor)(mulop)
-  val expr: Parser[Expr] = ifthenelse() +++ chainl1(term)(addop)
+  val term: Parser[Expr] = ifthenelse() +++ chainl1(factor)(mulop)
+  val expr: Parser[Expr] = chainl1(term)(addop)
 
   val fdecl: Parser[(String, String)] = for {
     _ <- symb("func")
@@ -252,8 +261,4 @@ package object Syntax {
     f <- func
     _ <- blank
   } yield f)
-
-  // Adicionar programa
-
-  // val program: Parser[List[FDeclaration]] = ???
 }
