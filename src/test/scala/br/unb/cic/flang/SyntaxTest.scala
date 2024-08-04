@@ -87,6 +87,15 @@ class SyntaxTest extends AnyFlatSpec with should.Matchers {
     res should be(Some((Mul(c2, Add(cx, c4)), "")))
   }
 
+  "expr parse(\" 2 * cf(true) \")" should "return Some(Mul(2, App(cf, true)), \"\")" in {
+    val res = apply(expr)(" 2 * cf(true) ")
+    val c2 = CTerm(TInt(2))
+    val cf = App("cf", CTerm(TBool(true)))
+    val exp = Mul(c2, cf)
+
+    res should be(Some((exp, "")))
+  }
+
   "expr parse(\"if true then 1 else 4\")" should "return Some(IfThenElse(true, 1, 4), \"\")" in {
     val res = apply(expr)("if true then 1 else 4")
     val ctrue = CTerm(TBool(true))
